@@ -1,57 +1,72 @@
-version: '3.9'
+version: '3.8'
 
 services:
-  mongo:
-    image: mongo:7
-    container_name: blog-platform-mongo
-    ports:
-      - '27017:27017'
-    volumes:
-      - mongo-data:/data/db
-
   auth-service:
-    build: ./auth-service
-    container_name: blog-platform-auth
-    environment:
-      PORT: 5001
-      MONGODB_URI: mongodb://mongo:27017/blog_auth
-      JWT_SECRET: replace_with_a_strong_secret
-      AWS_ACCESS_KEY_ID: your_aws_access_key_id
-      AWS_SECRET_ACCESS_KEY: your_aws_secret_access_key
-      AWS_REGION: us-east-1
-      AWS_S3_BUCKET: your_s3_bucket_name
+    build:
+      context: .
+      dockerfile: Dockerfile.auth
     ports:
-      - '5001:5001'
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - MONGODB_URI=mongodb://admin:password@mongo:27017/blog-auth?authSource=admin
+      - JWT_SECRET=your-secret-key
     depends_on:
       - mongo
+    networks:
+      - blog-network
 
   blog-service:
-    build: ./blog-service
-    container_name: blog-platform-blog
-    environment:
-      PORT: 5002
-      MONGODB_URI: mongodb://mongo:27017/blog_content
-      JWT_SECRET: replace_with_a_strong_secret
-      AWS_ACCESS_KEY_ID: your_aws_access_key_id
-      AWS_SECRET_ACCESS_KEY: your_aws_secret_access_key
-      AWS_REGION: us-east-1
-      AWS_S3_BUCKET: your_s3_bucket_name
+    build:
+      context: .
+      dockerfile: Dockerfile.blog
     ports:
-      - '5002:5002'
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - MONGODB_URI=mongodb://admin:password@mongo:27017/blog-posts?authSource=admin
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - JWT_SECRET=your-secret-key
+      - AWS_ACCESS_KEY_ID=your-access-key
+      - AWS_SECRET_ACCESS_KEY=your-secret-access-key
+      - AWS_S3_BUCKET=your-bucket
+      - AWS_REGION=us-east-1
     depends_on:
       - mongo
+    networks:
+      - blog-network
 
   frontend:
-    build: ./frontend
-    container_name: blog-platform-frontend
-    environment:
-      REACT_APP_AUTH_API_URL: http://localhost:5001/api
-      REACT_APP_BLOG_API_URL: http://localhost:5002/api
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        REACT_APP_API_URL: http://localhost:3001/api
     ports:
-      - '3000:3000'
+      - "3000:80"
     depends_on:
       - auth-service
       - blog-service
+    networks:
+      - blog-network
+
+  mongo:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    networks:
+      - blog-network
 
 volumes:
-  mongo-data:
+  mongo_data:
+
+networks:
+  blog-network:
+    driver: bridge

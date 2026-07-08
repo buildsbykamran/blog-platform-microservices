@@ -1,70 +1,64 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
-import { authApi, blogApi } from './services/api';
+import React from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import Header from './components/Header';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
+import BlogPostPage from './pages/BlogPostPage';
+import CreatePostPage from './pages/CreatePostPage';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import MyPostsPage from './pages/MyPostsPage';
+import ProfilePage from './pages/ProfilePage';
+import RegisterPage from './pages/RegisterPage';
 
-const Home = () => {
-  const [posts, setPosts] = useState([]);
+const Footer = () => (
+  <footer>
+    <small>Blog Platform Microservices</small>
+  </footer>
+);
 
-  useEffect(() => {
-    blogApi.get('/posts').then((response) => setPosts(response.data.posts || []));
-  }, []);
-
-  return (
-    <main>
-      <h1>Blog Platform</h1>
-      <p>Latest posts from the blog service.</p>
-      {posts.map((post) => (
-        <article key={post._id}>
-          <h2>{post.title}</h2>
-          {post.imageUrl && <img src={post.imageUrl} alt={post.title} />}
-          <p>{post.content}</p>
-          <small>By {post.author?.name}</small>
-        </article>
-      ))}
-    </main>
-  );
-};
-
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
-
-  const submit = async (event) => {
-    event.preventDefault();
-    const response = await authApi.post('/auth/login', { email, password });
-    localStorage.setItem('token', response.data.token);
-    setMessage('Signed in successfully');
-  };
-
-  return (
-    <main>
-      <h1>Sign in</h1>
-      <form onSubmit={submit}>
-        <input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email" />
-        <input
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="Password"
-          type="password"
-        />
-        <button type="submit">Sign in</button>
-      </form>
-      {message && <p>{message}</p>}
-    </main>
-  );
-};
+const AppRoutes = () => (
+  <>
+    <Header />
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/blog/:slug" element={<BlogPostPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route
+        path="/profile"
+        element={(
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/create-post"
+        element={(
+          <ProtectedRoute>
+            <CreatePostPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/my-posts"
+        element={(
+          <ProtectedRoute>
+            <MyPostsPage />
+          </ProtectedRoute>
+        )}
+      />
+    </Routes>
+    <Footer />
+  </>
+);
 
 const App = () => (
   <BrowserRouter>
-    <nav>
-      <Link to="/">Posts</Link>
-      <Link to="/login">Login</Link>
-    </nav>
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-    </Routes>
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   </BrowserRouter>
 );
 
