@@ -60,7 +60,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        REACT_APP_API_URL: ${REACT_APP_API_URL}
+        REACT_APP_AUTH_URL: ${REACT_APP_AUTH_URL:-http://auth-service:3001}
+        REACT_APP_BLOG_URL: ${REACT_APP_BLOG_URL:-http://blog-service:3002}
         REACT_APP_AWS_S3_URL: ${REACT_APP_AWS_S3_URL}
     image: ${FRONTEND_IMAGE:-blog-platform-frontend:latest}
     ports:
