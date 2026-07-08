@@ -6,7 +6,6 @@ COPY blog-service/package*.json ./
 RUN npm ci --only=production
 
 COPY blog-service/src ./src
-COPY blog-service/.env.production .env
 
 EXPOSE 3002
 

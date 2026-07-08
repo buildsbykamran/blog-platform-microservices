@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 const AUTH_TOKEN_KEY = 'authToken';
 
 const api = axios.create({
@@ -87,39 +87,39 @@ export const logout = () => {
 
 export const createPost = async (title, content, excerpt, tags, status, image) =>
   unwrap(
-    await api.post('/posts', toFormData({ title, content, excerpt, tags, status }, image), {
+    await api.post('/api/posts', toFormData({ title, content, excerpt, tags, status }, image), {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
   );
 
 export const getPosts = async (page = 1, limit = 10, status = 'published') =>
-  unwrap(await api.get('/posts', { params: { page, limit, status } }));
+  unwrap(await api.get('/api/posts', { params: { page, limit, status } }));
 
-export const getPostBySlug = async (slug) => unwrap(await api.get(`/posts/${slug}`));
+export const getPostBySlug = async (slug) => unwrap(await api.get(`/api/posts/${slug}`));
 
 export const updatePost = async (postId, data, image) =>
   unwrap(
-    await api.put(`/posts/${postId}`, toFormData(data, image), {
+    await api.put(`/api/posts/${postId}`, toFormData(data, image), {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
   );
 
-export const deletePost = async (postId) => unwrap(await api.delete(`/posts/${postId}`));
+export const deletePost = async (postId) => unwrap(await api.delete(`/api/posts/${postId}`));
 
-export const searchPosts = async (query) => unwrap(await api.get('/posts/search', { params: { q: query } }));
+export const searchPosts = async (query) => unwrap(await api.get('/api/posts/search', { params: { q: query } }));
 
 export const getPostsByAuthor = async (authorId, page = 1, limit = 10, status) =>
-  unwrap(await api.get(`/posts/author/${authorId}`, { params: { page, limit, status } }));
+  unwrap(await api.get(`/api/posts/author/${authorId}`, { params: { page, limit, status } }));
 
 export const createComment = async (postId, content) =>
-  unwrap(await api.post(`/posts/${postId}/comments`, { content }));
+  unwrap(await api.post(`/api/posts/${postId}/comments`, { content }));
 
 export const getCommentsByPost = async (postId, page = 1, limit = 10) =>
-  unwrap(await api.get(`/posts/${postId}/comments`, { params: { page, limit } }));
+  unwrap(await api.get(`/api/posts/${postId}/comments`, { params: { page, limit } }));
 
 export const updateComment = async (commentId, content) =>
-  unwrap(await api.put(`/comments/${commentId}`, { content }));
+  unwrap(await api.put(`/api/comments/${commentId}`, { content }));
 
-export const deleteComment = async (commentId) => unwrap(await api.delete(`/comments/${commentId}`));
+export const deleteComment = async (commentId) => unwrap(await api.delete(`/api/comments/${commentId}`));
 
 export { api, AUTH_TOKEN_KEY };

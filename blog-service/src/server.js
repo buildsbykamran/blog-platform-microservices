@@ -1,18 +1,20 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const connectDB = require('./config/db');
 const postRoutes = require('./routes/posts');
 const commentRoutes = require('./routes/comments');
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const app = express();
-const PORT = process.env.PORT || 5002;
+const PORT = process.env.PORT || 3002;
+const corsOrigin = process.env.CORS_ORIGIN || '*';
 
 connectDB();
 
-app.use(cors());
+app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 
 app.get('/health', (req, res) => {

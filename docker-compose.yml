@@ -1,19 +1,19 @@
-version: '3.8'
-
 services:
   auth-service:
     build:
       context: .
       dockerfile: Dockerfile.auth
+    image: ${AUTH_IMAGE:-blog-platform-auth:latest}
     ports:
       - "3001:3001"
     environment:
-      - NODE_ENV=development
-      - PORT=3001
-      - MONGODB_URI=mongodb://admin:password@mongo:27017/blog-auth?authSource=admin
-      - JWT_SECRET=your-secret-key
-    depends_on:
-      - mongo
+      NODE_ENV: production
+      PORT: 3001
+      MONGODB_URI: ${MONGODB_URI:?Set MONGODB_URI to your AWS DocumentDB/MongoDB connection string}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      JWT_EXPIRE: ${JWT_EXPIRE:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://yourdomain.com}
+    restart: unless-stopped
     networks:
       - blog-network
 
@@ -21,20 +21,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.blog
+    image: ${BLOG_IMAGE:-blog-platform-blog:latest}
     ports:
       - "3002:3002"
     environment:
-      - NODE_ENV=development
-      - PORT=3002
-      - MONGODB_URI=mongodb://admin:password@mongo:27017/blog-posts?authSource=admin
-      - AUTH_SERVICE_URL=http://auth-service:3001
-      - JWT_SECRET=your-secret-key
-      - AWS_ACCESS_KEY_ID=your-access-key
-      - AWS_SECRET_ACCESS_KEY=your-secret-access-key
-      - AWS_S3_BUCKET=your-bucket
-      - AWS_REGION=us-east-1
+      NODE_ENV: production
+      PORT: 3002
+      MONGODB_URI: ${MONGODB_URI:?Set MONGODB_URI to your AWS DocumentDB/MongoDB connection string}
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://auth-service:3001/auth}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:?Set AWS_S3_BUCKET}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?Set AWS_ACCESS_KEY_ID or use an instance/task role and remove this variable}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?Set AWS_SECRET_ACCESS_KEY or use an instance/task role and remove this variable}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://yourdomain.com}
     depends_on:
-      - mongo
+      - auth-service
+    restart: unless-stopped
     networks:
       - blog-network
 
@@ -43,29 +46,17 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
       args:
-        REACT_APP_API_URL: http://localhost:3001/api
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-https://api.yourdomain.com}
+        REACT_APP_AWS_S3_URL: ${REACT_APP_AWS_S3_URL:-https://blog-platform-images.s3.amazonaws.com}
+    image: ${FRONTEND_IMAGE:-blog-platform-frontend:latest}
     ports:
       - "3000:80"
     depends_on:
       - auth-service
       - blog-service
+    restart: unless-stopped
     networks:
       - blog-network
-
-  mongo:
-    image: mongo:6.0
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password
-    networks:
-      - blog-network
-
-volumes:
-  mongo_data:
 
 networks:
   blog-network:

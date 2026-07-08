@@ -4,9 +4,9 @@
   "description": "React frontend for the blog platform",
   "private": true,
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "node scripts/with-root-env.js react-scripts start",
+    "build": "node scripts/with-root-env.js react-scripts build",
+    "test": "node scripts/with-root-env.js react-scripts test",
     "eject": "react-scripts eject"
   },
   "dependencies": {
