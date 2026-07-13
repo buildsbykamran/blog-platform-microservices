@@ -2,42 +2,82 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { createComment, getPostBySlug } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const formatDate = (date) => (date ? new Date(date).toLocaleString() : '');
 
 const BlogPostPage = () => {
   const { slug } = useParams();
   const { isAuthenticated } = useAuth();
+  const toast = useToast();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [content, setContent] = useState('');
   const [message, setMessage] = useState('');
   const [commentMessage, setCommentMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submittingComment, setSubmittingComment] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
     getPostBySlug(slug)
       .then((result) => {
         setPost(result.data.post);
         setComments(result.data.comments || []);
       })
-      .catch((error) => setMessage(error.message));
+      .catch((error) => {
+        setMessage(error.message);
+        toast.error(error.message);
+      })
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   const submitComment = async (event) => {
     event.preventDefault();
+
+    if (!content.trim()) {
+      setCommentMessage('Comment cannot be empty.');
+      return;
+    }
+
     setCommentMessage('');
+    setSubmittingComment(true);
 
     try {
       const result = await createComment(post.id, content);
       setComments((current) => [result.data.comment || result.data, ...current]);
       setContent('');
+      toast.success('Comment posted.');
     } catch (error) {
       setCommentMessage(error.message);
+      toast.error(error.message);
+    } finally {
+      setSubmittingComment(false);
     }
   };
 
-  if (message) return <main><p className="error">{message}</p></main>;
-  if (!post) return <main><p className="message">Loading...</p></main>;
+  if (loading) {
+    return (
+      <main>
+        <div className="skeleton" style={{ height: 40, width: '60%', marginBottom: 16 }} />
+        <div className="skeleton" style={{ height: 280, marginBottom: 16 }} />
+        <div className="skeleton" style={{ height: 100 }} />
+      </main>
+    );
+  }
+
+  if (message) {
+    return (
+      <main>
+        <div className="empty-state">
+          <h2>Post not found</h2>
+          <p className="error" style={{ display: 'inline-flex', marginTop: 8 }}>{message}</p>
+          <p style={{ marginTop: 16 }}><Link to="/">← Back to all posts</Link></p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main>
@@ -53,16 +93,25 @@ const BlogPostPage = () => {
       </article>
 
       <section className="comments">
-        <h2>Comments</h2>
+        <h2>Comments ({comments.length})</h2>
         {isAuthenticated ? (
           <form onSubmit={submitComment}>
-            <textarea value={content} onChange={(event) => setContent(event.target.value)} maxLength="1000" />
-            <button type="submit">Add comment</button>
+            {commentMessage && <p className="error">{commentMessage}</p>}
+            <textarea
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+              maxLength="1000"
+              placeholder="Share your thoughts..."
+            />
+            <button type="submit" disabled={submittingComment} style={{ justifySelf: 'start' }}>
+              {submittingComment && <span className="spinner" />}
+              {submittingComment ? 'Posting...' : 'Add comment'}
+            </button>
           </form>
         ) : (
-          <p><Link to="/login">Login</Link> to comment.</p>
+          <p><Link to="/login">Login</Link> to join the conversation.</p>
         )}
-        {commentMessage && <p className="error">{commentMessage}</p>}
+        {comments.length === 0 && <p className="meta">No comments yet. Be the first to share your thoughts.</p>}
         {comments.map((comment) => (
           <article className="comment" key={comment.id || comment._id}>
             <p>{comment.content}</p>

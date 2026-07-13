@@ -2,7 +2,9 @@ import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
+import ToastContainer from './components/ToastContainer';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import BlogPostPage from './pages/BlogPostPage';
 import CreatePostPage from './pages/CreatePostPage';
 import HomePage from './pages/HomePage';
@@ -13,7 +15,7 @@ import RegisterPage from './pages/RegisterPage';
 
 const Footer = () => (
   <footer>
-    <small>Blog Platform Microservices</small>
+    <small>&copy; {new Date().getFullYear()} Blog Platform Microservices</small>
   </footer>
 );
 
@@ -56,9 +58,12 @@ const AppRoutes = () => (
 
 const App = () => (
   <BrowserRouter>
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <AppRoutes />
+        <ToastContainer />
+      </AuthProvider>
+    </ToastProvider>
   </BrowserRouter>
 );
 
