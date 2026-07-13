@@ -44,7 +44,6 @@ const HomePage = () => {
 
   useEffect(() => {
     loadPosts(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const submitSearch = (event) => {

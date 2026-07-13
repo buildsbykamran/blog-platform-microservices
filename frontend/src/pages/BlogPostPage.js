@@ -30,7 +30,6 @@ const BlogPostPage = () => {
         toast.error(error.message);
       })
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   const submitComment = async (event) => {

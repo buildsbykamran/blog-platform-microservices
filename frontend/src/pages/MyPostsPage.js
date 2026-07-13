@@ -38,7 +38,6 @@ const MyPostsPage = () => {
 
   useEffect(() => {
     loadPosts(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const removePost = async (postId) => {
